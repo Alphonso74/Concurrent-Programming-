@@ -1,0 +1,290 @@
+//*******************
+//* HW#5  **
+//********************
+// Alphonso Mckenzie
+// Logan Kollar
+//Thanksgiving
+
+/* Global Variables */
+
+semaphore mCook, allRelatives, protect, readyHay;
+semaphore relready, childready, hayride;
+semaphore eating, play, home;
+int count = 0;
+int countChild = 0;
+int rideCount = 0;
+int fatherReady = 0;
+int children[8];
+int arr1Count = 0;
+int relatives[6];
+int arr2Count = 0;
+int fath1 = 0;
+int fath2 = 0;
+//int fatherCounter2 = 0;
+
+
+void Delay(void)
+{
+  int i;
+  int DelayTime;
+  DelayTime = random (10);
+  for (i = 0; i < DelayTime; i++);
+}
+
+
+//*****
+//Child Process 
+void child(int i){
+Delay();
+
+wait(protect); //Add each child into the array 
+children[arr1Count] = i; // add the value of the child to the next index
+
+//cout << "Array child Value: " << children[arr1Count] << endl;
+
+arr1Count++; //incr
+signal(protect);
+
+
+wait(protect);
+countChild++;
+cout << "child " << i << " is raking leaves " << "Count is " << countChild << endl;
+signal(protect);
+
+if(countChild == 8){  // check when all children are present 
+wait(protect);
+cout << "All children done raking" << endl;
+signal(protect);
+
+countChild = 0;
+
+signal(hayride); //singal when all children are present 
+
+}
+
+wait(protect);
+cout << "Child " << i << " is waiting for a hayride" << endl; //children waiting for ride
+signal(protect);
+
+wait(eating); //signal from after sitting 
+
+wait(protect);
+cout << "Child " << children[fath1] << " is eating" << endl;
+cout << "Child " << children[fath1] << " is done eating" << endl;
+fath1 = fath1 + 1; //incr
+signal(protect);
+
+wait(play); //wait for after father excuses from table
+wait(protect);
+cout << "Child " << children[fath1] << " goes out to play" << endl;
+fath1 = fath1 + 1; //incr
+signal(protect);
+} 
+
+//*****
+//mother process
+void mother(){
+Delay();
+
+wait(protect);
+cout << "Mother is making the meal" << endl; //mother cooks ASAP
+signal(protect);
+
+Delay();
+
+wait(protect); //once done cooking waits for ride
+cout << "Mother is waiting for a hayride " << endl;
+signal(protect);
+
+}
+
+//******
+//relative process
+void relative(int j){
+Delay();
+
+wait(protect);
+relatives[arr2Count] = j; //add each relative into array
+
+
+arr2Count++; //incr
+signal(protect);
+
+wait(protect);
+count++; //when each relative proccess arrives
+cout << "Relative " << j << " arrives" << " Relative Count: " << count << endl;
+signal(protect);
+
+if(count == 6){ //when all relativs are there
+
+wait(protect);
+cout << "All relatives present" << endl;
+signal(protect);
+
+count = 0;
+
+
+}
+
+wait(protect);
+cout << "Relative " << j << " is waiting for a hayride" << endl;
+signal(protect);
+
+wait(eating);
+
+wait(protect); // relative when everyone is sitting
+cout << "Relative " << relatives[fath2] << " is eating" << endl;
+cout << "Relative " << relatives[fath2] << " is done eating" << endl;
+fath2 = fath2 + 1;
+signal(protect);
+
+wait(home);
+// when done eating relatives go home 
+wait(protect);
+cout << "Relative " << relatives[fath2] << " goes home" << endl;
+fath2 = fath2 + 1;
+signal(protect);
+}
+//******
+//father proccess 
+void father(){
+int f;
+int d;
+int e;
+Delay();
+
+
+
+wait(protect);//father ready ASAP
+cout << "Father is ready to give hayride" << endl;
+signal(protect);
+
+
+wait(hayride); //when all children done raking some relatives should b present 
+
+for(f = 1; f < 5; f = f + 1){ //iterate through array 
+wait(protect);
+//cout << "XXXXXX " << f << endl;
+cout << "Father gives hayride to " << "Child " << children[fath1] << ", " << "Child " << 
+children[fath1 + 1] << ", and Relative "<<  relatives[fath2]<< endl;
+cout << "Child " << fath1 << " is sitting at table" << endl;
+cout << "Child " << fath1 + 1 << " is sitting at table" << endl;
+cout << "Relative " << fath2 << " is sitting at table" << endl;
+fath1 = fath1 + 2; 
+fath2 = fath2 + 1;
+signal(protect); 
+}
+
+wait(protect); // give remaining relatives rides
+cout << "Father gives hayride to Relative " << relatives[fath2] << endl;
+cout << "Relative " << fath2 << " is sitting at table " << endl;
+fath2 = fath2 + 1;
+cout << "Father gives hayride to Relative " << relatives[fath2] << endl;
+cout << "Relative " << fath2 << " is sitting at table " << endl;
+cout << "Father gives hayride to mother " << endl;
+cout << "Mother is sitting at table" << endl;
+cout << "Father is sitting at table" << endl;
+signal(protect);
+
+wait(protect);
+cout << "Father carves the turkey" << endl;
+signal(protect);
+
+fath1 = 0;
+fath2 = 0;
+
+for(f = 0; f < 14; f = f + 1){
+Delay();
+signal(eating);
+}
+
+wait(protect);
+cout << "Mother is eating" << endl;
+cout << "father is eating" << endl;
+signal(protect);
+
+wait(protect);
+cout << "Father is done eating" << endl;
+cout << "Mother is done eating" << endl;
+signal(protect);
+
+wait(protect);
+cout << "Father excuses everyone from table" << endl;
+signal(protect);
+
+fath1 = 0;
+fath2 = 0;
+
+
+for(d = 0; d < 8; d = d + 1){ //play loop
+Delay();
+wait(protect);
+signal(play);
+signal(protect);
+}
+
+wait(protect);
+cout << "Mother goes to read her book." << endl;
+signal(protect);
+
+for(e = 0; e < 6; e = e + 1){//relatives go home
+wait(protect);
+signal(home);
+signal(protect);
+}
+
+wait(protect);
+cout << "Father goes to watch football." << endl;
+signal(protect);
+
+
+}
+
+
+
+
+
+main()
+{
+
+initialsem(mCook, 0);
+initialsem(allRelatives, 0);
+initialsem(protect, 1);
+initialsem(readyHay, 0);
+initialsem(childready, 0);
+initialsem(relready, 0);
+initialsem(hayride, 0);
+initialsem(eating, 0);
+initialsem(play, 0);
+initialsem(home, 0);
+
+cobegin
+{
+
+
+father();
+mother();
+child(1);
+child(2);
+child(3);
+child(4);
+child(5);
+child(6);
+child(7);
+child(8);
+relative(1);
+relative(2);
+relative(3);
+relative(4);
+relative(5);
+relative(6);
+
+
+
+
+}
+
+
+
+
+}
